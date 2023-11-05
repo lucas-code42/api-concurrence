@@ -8,7 +8,7 @@ type ResponseDto struct {
 
 // Err is the default error msg
 type Err struct {
-	ErrorMessage string `json:"errorMessage"`
+	ErrorMessage error `json:"errorMessage"`
 }
 
 // CepDto is the default DTO from service
@@ -42,6 +42,7 @@ type BrasilAberto struct {
 		StateShortname string `json:"stateShortname"`
 		Zipcode        string `json:"zipcode"`
 	} `json:"result"`
+	Error error
 }
 
 // ViaCep is the struct that https://viacep.com.br/ uses
@@ -56,6 +57,7 @@ type ViaCep struct {
 	Gia         string `json:"gia"`
 	Ddd         string `json:"ddd"`
 	Siafi       string `json:"siafi"`
+	Error       error
 }
 
 // InitProviders return's the initalize providers url
@@ -63,3 +65,36 @@ var (
 	ViaCepUrl       = "https://viacep.com.br/ws/xxx/json/"
 	BrasilAbertoUrl = "https://brasilaberto.com/api/v1/zipcode/"
 )
+
+// Metrics
+var (
+	Total int32
+
+	TimeOut int32
+
+	ViaCepTotal int32
+	ViaCepOk    int32
+	ViaCepError int32
+
+	BrasilAbertoTotal int32
+	BrasilAbertoOk    int32
+	BrasilAbertoError int32
+)
+
+type Metrics struct {
+	Total int32
+
+	TimeOut int32
+
+	ViaCep struct {
+		Total int32
+		Ok    int32
+		Error int32
+	}
+
+	BrasilAberto struct {
+		Total int32
+		Ok    int32
+		Error int32
+	}
+}
