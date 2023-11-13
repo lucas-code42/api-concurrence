@@ -12,7 +12,7 @@ import (
 	"github.com/lucas-code42/api-race/models"
 )
 
-func getMetrics(w *http.ResponseWriter, r *http.Request) {
+func getMetrics(w http.ResponseWriter, r *http.Request) {
 	byteResponse, err := json.Marshal(models.Metrics{
 		Total:   models.Total,
 		TimeOut: models.TimeOut,
@@ -28,11 +28,11 @@ func getMetrics(w *http.ResponseWriter, r *http.Request) {
 		}{Total: models.BrasilAbertoTotal, Ok: models.BrasilAbertoOk, Error: models.BrasilAbertoError},
 	})
 	if err != nil {
-		(*w).WriteHeader(http.StatusInternalServerError)
-		(*w).Write([]byte("Error to return metrics"))
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("Error to return metrics"))
 	}
-	(*w).WriteHeader(http.StatusOK)
-	(*w).Write(byteResponse)
+	w.WriteHeader(http.StatusOK)
+	w.Write(byteResponse)
 }
 
 func response(w *http.ResponseWriter, r *http.Request, data []byte, statusCode int) {
@@ -97,7 +97,7 @@ func Router(w http.ResponseWriter, r *http.Request) {
 		getCep(&w, r)
 		return
 	} else if r.Method == http.MethodTrace {
-		getMetrics(&w, r)
+		getMetrics(w, r)
 		return
 	}
 
