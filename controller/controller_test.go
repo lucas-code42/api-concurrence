@@ -7,39 +7,10 @@ import (
 	"testing"
 
 	"github.com/lucas-code42/api-race/models"
-	"github.com/stretchr/testify/mock"
 )
 
-type TestMock struct {
-	mock.Mock
-}
-
-type MockFuncs interface {
-	enableCors(w http.ResponseWriter, r *http.Request)
-	getCep(w http.ResponseWriter, r *http.Request)
-	getMetrics(w http.ResponseWriter, r *http.Request) error
-	response(w http.ResponseWriter, r *http.Request)
-}
-
-func (m *TestMock) enableCors(w http.ResponseWriter, r *http.Request) {
-	m.Called(w, r)
-}
-
-func (m *TestMock) getCep(w *http.ResponseWriter, r *http.Request) {
-	m.Called(&w, r)
-}
-
-func (m *TestMock) getMetrics(w http.ResponseWriter, r *http.Request) error {
-	args := m.Called(&w, r)
-	return args.Error(0)
-}
-
-func (m *TestMock) response(w http.ResponseWriter, r *http.Request) {
-	m.Called(w, r)
-}
-
 func TestGetMetrics(t *testing.T) {
-	req, err := http.NewRequest("GET", "http://127.0.0.0.1:8080/metrics", nil)
+	req, err := http.NewRequest(http.MethodTrace, "http://127.0.0.0.1:8080/metrics", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -51,25 +22,76 @@ func TestGetMetrics(t *testing.T) {
 		t.Errorf("Expected code 200, but got %v", w.Code)
 	}
 
-	expectedBody := models.Metrics{}
-	if err := json.Unmarshal(w.Body.Bytes(), &expectedBody); err != nil {
-		t.Errorf("Expected: %v, Got: %v", expectedBody, w.Body.String())
+	var expectedResponse models.Metrics
+	if err := json.Unmarshal(w.Body.Bytes(), &expectedResponse); err != nil {
+		t.Errorf("Expected: %v, Got: %v", expectedResponse, w.Body.String())
 	}
 }
 
 func TestRouter(t *testing.T) {
-	tm := &TestMock{}
-	req, err := http.NewRequest("GET", "http://127.0.0.0.1:8080/64067030", nil)
+	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.0.1:8080/64067030", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 	w := httptest.NewRecorder()
 
-	// Espera que getCep seja chamado exatamente uma vez
-	tm.On("getCep", w, mock.Anything).Return(nil).Once()
+	Router(w, req)
+	if w.Code != http.StatusOK {
+		t.Errorf("Expected code 200, but got %v", w.Code)
+	}
+
+	var expectedResponse models.ResponseDto
+	if err := json.Unmarshal(w.Body.Bytes(), &expectedResponse); err != nil {
+		t.Errorf("Expected: %v, Got: %v", expectedResponse, w.Body.String())
+	}
+}
+
+func TestCepValidation(t *testing.T) {
+	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.0.1:8080/6406703", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	w := httptest.NewRecorder()
 
 	Router(w, req)
+	if w.Code != http.StatusInternalServerError {
+		t.Errorf("Expected code 500, but got %v", w.Code)
+	}
+}
 
-	// Verifica se todas as expectativas foram atendidas
-	tm.AssertExpectations(t)
+func TestEnableCors(t *testing.T) {
+	req, err := http.NewRequest(http.MethodOptions, "http://127.0.0.0.1:8080/", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	w := httptest.NewRecorder()
+
+	Router(w, req)
+	t.Log(w.Body.String())
+	if w.Code != http.StatusMethodNotAllowed {
+		t.Errorf("Expected code 405, but got %v", w.Code)
+	}
+
+	var expectedResponse models.ResponseDto
+	if err := json.Unmarshal(w.Body.Bytes(), &expectedResponse); err != nil {
+		t.Errorf("Expected: %v, Got: %v", expectedResponse, w.Body.String())
+	}
+}
+
+func TestGetMetricsRouterFlow(t *testing.T) {
+	req, err := http.NewRequest(http.MethodTrace, "http://127.0.0.0.1:8080/64067030", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	w := httptest.NewRecorder()
+
+	Router(w, req)
+	if w.Code != http.StatusOK {
+		t.Errorf("Expected code 200, but got %v", w.Code)
+	}
+
+	var expectedResponse models.ResponseDto
+	if err := json.Unmarshal(w.Body.Bytes(), &expectedResponse); err != nil {
+		t.Errorf("Expected: %v, Got: %v", expectedResponse, w.Body.String())
+	}
 }
