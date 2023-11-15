@@ -2,7 +2,6 @@ package controller
 
 import (
 	"encoding/json"
-	"errors"
 	"net/http"
 	"strconv"
 	"strings"
@@ -35,17 +34,17 @@ func getMetrics(w http.ResponseWriter, r *http.Request) {
 	w.Write(byteResponse)
 }
 
-func response(w *http.ResponseWriter, r *http.Request, data []byte, statusCode int) {
+func response(w http.ResponseWriter, r *http.Request, data []byte, statusCode int) {
 	if len(data) == 0 {
-		(*w).WriteHeader(statusCode)
-		(*w).Write(data)
+		w.WriteHeader(statusCode)
+		w.Write(data)
 		return
 	}
-	(*w).WriteHeader(statusCode)
-	(*w).Write(data)
+	w.WriteHeader(statusCode)
+	w.Write(data)
 }
 
-func getCep(w *http.ResponseWriter, r *http.Request) {
+func getCep(w http.ResponseWriter, r *http.Request) {
 	rawCep := strings.ReplaceAll(r.URL.Path, "/", "")
 	proceed := func() bool {
 		if _, err := strconv.Atoi(rawCep); err != nil || len(rawCep) < 8 {
@@ -76,25 +75,24 @@ func getCep(w *http.ResponseWriter, r *http.Request) {
 		response(w, r, []byte("error to mount ResponseDTO fora"), http.StatusInternalServerError)
 		return
 	}
-	response(w, r, byteResponse, http.StatusInternalServerError)
+	response(w, r, byteResponse, http.StatusOK)
 }
 
-func enableCors(w *http.ResponseWriter, r *http.Request) {
-	(*w).Header().Set("Access-Control-Allow-Origin", "*")
-	(*w).Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-	(*w).Header().Set("Access-Control-Allow-Headers", "Content-Type")
+func enableCors(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 	if r.Method == http.MethodOptions {
-		(*w).Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-		(*w).Header().Set("Access-Control-Allow-Headers", "Content-Type")
-		(*w).WriteHeader(http.StatusOK)
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 		return
 	}
 }
 
 func Router(w http.ResponseWriter, r *http.Request) {
-	enableCors(&w, r)
+	enableCors(w, r)
 	if r.Method == http.MethodGet {
-		getCep(&w, r)
+		getCep(w, r)
 		return
 	} else if r.Method == http.MethodTrace {
 		getMetrics(w, r)
@@ -102,13 +100,16 @@ func Router(w http.ResponseWriter, r *http.Request) {
 	}
 
 	dtoRes := models.ResponseDto{
-		Data:  models.CepDto{},
-		Error: models.Err{ErrorMessage: errors.New("method not allow, try a GET")},
+		Data: models.CepDto{},
+		Error: models.Err{
+			ErrorMessage: "method not allowed",
+		},
 	}
-	res, err := json.Marshal(&dtoRes)
+	res, err := json.Marshal(dtoRes)
 	if err != nil {
-		response(&w, r, []byte("error to mount ResponseDTO"), http.StatusInternalServerError)
+		response(w, r, []byte("error to mount ResponseDTO"), http.StatusInternalServerError)
+		return
 	}
 
-	response(&w, r, res, http.StatusMethodNotAllowed)
+	response(w, r, res, http.StatusMethodNotAllowed)
 }
