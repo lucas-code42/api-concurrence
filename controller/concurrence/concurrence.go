@@ -17,28 +17,24 @@ func getViaCep(cep string, viaCepChannel chan<- models.ViaCep) {
 	res, err := http.Get(url)
 	if err != nil {
 		log.Println("VIA CEP - error to mount request")
-		// viaCepChannel <- models.ViaCep{Error: errors.New("error to mount request")}
 		atomic.AddInt32(&models.ViaCepError, 1)
 		return
 	}
 	defer func() {
 		if err := res.Body.Close(); err != nil {
 			log.Println("VIA CEP - error to close body")
-			// viaCepChannel <- models.ViaCep{Error: errors.New("error to close body")}
 		}
 	}()
 
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		log.Println("VIA CEP - error to read body")
-		// viaCepChannel <- models.ViaCep{Error: errors.New("error to read body")}
 		atomic.AddInt32(&models.ViaCepError, 1)
 		return
 	}
 
 	if res.StatusCode != http.StatusOK {
 		log.Println("VIA CEP - error statuscode")
-		// viaCepChannel <- models.ViaCep{Error: errors.New("error statuscode")}
 		atomic.AddInt32(&models.ViaCepError, 1)
 		return
 	}
@@ -46,7 +42,6 @@ func getViaCep(cep string, viaCepChannel chan<- models.ViaCep) {
 	var responseModel models.ViaCep
 	if err := json.Unmarshal(body, &responseModel); err != nil {
 		log.Println("VIA CEP - error to unmarshal")
-		// viaCepChannel <- models.ViaCep{Error: errors.New("error to unmarshal")}
 		atomic.AddInt32(&models.ViaCepError, 1)
 		return
 	}
@@ -58,28 +53,24 @@ func getBrasilAberto(cep string, brasilAbertoChannel chan<- models.BrasilAberto)
 	res, err := http.Get(url)
 	if err != nil {
 		log.Println("BRASILABERTO - error to mount request")
-		// brasilAbertoChannel <- models.BrasilAberto{Error: errors.New("error to mount request")}
 		atomic.AddInt32(&models.BrasilAbertoError, 1)
 		return
 	}
 	defer func() {
 		if err := res.Body.Close(); err != nil {
 			log.Println("BRASILABERTO - error to close body")
-			// brasilAbertoChannel <- models.BrasilAberto{Error: errors.New("error to close body")}
 		}
 	}()
 
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		log.Println("BRASILABERTO - error to read body")
-		// brasilAbertoChannel <- models.BrasilAberto{Error: errors.New("error to read body")}
 		atomic.AddInt32(&models.BrasilAbertoError, 1)
 		return
 	}
 
 	if res.StatusCode != http.StatusOK {
 		log.Println("BRASILABERTO - error statuscode")
-		// brasilAbertoChannel <- models.BrasilAberto{Error: errors.New("error statuscode")}
 		atomic.AddInt32(&models.BrasilAbertoError, 1)
 		return
 	}
@@ -87,7 +78,6 @@ func getBrasilAberto(cep string, brasilAbertoChannel chan<- models.BrasilAberto)
 	var responseModel models.BrasilAberto
 	if err := json.Unmarshal(body, &responseModel); err != nil {
 		log.Println("BRASILABERTO - error to unmarshal")
-		// brasilAbertoChannel <- models.BrasilAberto{Error: errors.New("error to unmarshal")}
 		atomic.AddInt32(&models.BrasilAbertoError, 1)
 		return
 	}
@@ -105,16 +95,16 @@ func CepRace(cep string) models.ResponseDto {
 	case viaCepResponse := <-viaCepChannel:
 		atomic.AddInt32(&models.ViaCepTotal, 1)
 		log.Println("** VIA CEP WINS **\n", viaCepResponse)
-			cepDto := models.CepDto{
-				Cep:         viaCepResponse.Cep,
-				Logradouro:  viaCepResponse.Logradouro,
-				Complemento: viaCepResponse.Complemento,
-				Bairro:      viaCepResponse.Bairro,
-				Localidade:  viaCepResponse.Localidade,
-				Uf:          viaCepResponse.Uf,
-				ApiOrigin:   "viaCep",
-			}
-			return models.ResponseDto{Data: cepDto, Error: models.Err{ErrorMessage: ""}}
+		cepDto := models.CepDto{
+			Cep:         viaCepResponse.Cep,
+			Logradouro:  viaCepResponse.Logradouro,
+			Complemento: viaCepResponse.Complemento,
+			Bairro:      viaCepResponse.Bairro,
+			Localidade:  viaCepResponse.Localidade,
+			Uf:          viaCepResponse.Uf,
+			ApiOrigin:   "viaCep",
+		}
+		return models.ResponseDto{Data: cepDto, Error: models.Err{ErrorMessage: ""}}
 
 	case brasilAbertoResponse := <-brasilAbertoChannel:
 		atomic.AddInt32(&models.BrasilAbertoTotal, 1)
