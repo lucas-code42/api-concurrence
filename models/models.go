@@ -8,7 +8,7 @@ type ResponseDto struct {
 
 // Err is the default error msg
 type Err struct {
-	ErrorMessage error `json:"errorMessage"`
+	ErrorMessage string `json:"errorMessage"`
 }
 
 // CepDto is the default DTO from service

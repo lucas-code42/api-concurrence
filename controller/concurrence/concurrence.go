@@ -114,7 +114,7 @@ func CepRace(cep string) models.ResponseDto {
 				Uf:          viaCepResponse.Uf,
 				ApiOrigin:   "viaCep",
 			}
-			return models.ResponseDto{Data: cepDto, Error: models.Err{ErrorMessage: nil}}
+			return models.ResponseDto{Data: cepDto, Error: models.Err{ErrorMessage: ""}}
 
 	case brasilAbertoResponse := <-brasilAbertoChannel:
 		atomic.AddInt32(&models.BrasilAbertoTotal, 1)
@@ -129,7 +129,7 @@ func CepRace(cep string) models.ResponseDto {
 				Uf:          brasilAbertoResponse.Result.City,
 				ApiOrigin:   "brasilAberto",
 			}
-			return models.ResponseDto{Data: cepDto, Error: models.Err{ErrorMessage: nil}}
+			return models.ResponseDto{Data: cepDto, Error: models.Err{ErrorMessage: ""}}
 		}
 		atomic.AddInt32(&models.BrasilAbertoError, 1)
 		log.Println("BRASIL ABERTO ERROR ->", brasilAbertoResponse.Error)
